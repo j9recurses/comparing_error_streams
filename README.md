@@ -48,7 +48,7 @@ The error stream is fairly noisey, for certain time periods, many error codes wi
 Our goal is to separate the signal from the noise and detect important patterns in the data.
 
 ### Using the Moving Average
-The (moving average)[https://en.wikipedia.org/wiki/Moving_average] is a way to smooth the streaming data.
+The [moving average](https://en.wikipedia.org/wiki/Moving_average) is a way to smooth the streaming data.
 It tells us if the number of errors for a given error code are going up or down over time.
 
 Once you have calcualted the moving average for each error type for a given player version, you can compare the moving averages at a given time step
@@ -77,11 +77,21 @@ The moving standard deviation would be helpful because it would give us a measur
 For instance, if we found a low moving standard deviation for an error code in a player version, this would indicate the number of errors seen in a window period is pretty stable (ie aka the number of errors are not spiking/fluctuationg much)
 
 ### Visualization
-I was able to visualize the moving average for each error code in real time using the [Smoothie charting library](https://github.com/joewalnes/smoothie)
-As new error codes get discovered in the streams, they get added to the browswer window in real time.
+I was able to visualize the moving average for each error code in real time using the [smoothie charting library](https://github.com/joewalnes/smoothie)
+As new error codes are discovered in the error stream, they get added to the browswer window in real time.
 If I had more time, I would visualize the sum of the all the errors for each error code and spend more time on layout and styling....
 
-### Technical Stack
+## Technical Stack
 For this project, I used node js.
 Node is good choice for this project because it has some good libraries/features to deal with various streams.
 Additionally, node let me quickly stand up web server. The [socket.io](https://socket.io/) library also made it straight forward/easy for the server to connect and manage to the client stream and web client over websockets.
+
+###Other improvements
+
+If I had more time, I would do the following:
+
+-use parameters and/or configuration files for certain variables
+-Allow the user to change the step/time interval of the moving average in the web ui/visualization
+-Calculate the moving standard deviation
+-write tests/unit tests
+-organize my code better and format/lint it (its pretty lumpy as of now)
