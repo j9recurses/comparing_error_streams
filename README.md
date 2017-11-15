@@ -73,16 +73,24 @@ The moving average is "moving" because it is continously recomputed itself as ne
 The moving average progresses by dropping the earliest value in a period and adding the latest value.
 The process of dropping older values ensures that the data that your processing never gets too unwieldy.
 
+By comparing the moving average between two error code streams, we can find if the new build errors are significantly different from the last build.
+
 ### Additional Stream Analysis
-Beyond the moving average, I also stored the sum of all each type of error. I did not end up using them in my visualization.
-I also wanted to also find the moving standard deviation of the error stream but I ran out of time.
+Beyond the moving average, I also stored the sum of all each type of error. Looking at the cumulative sums of the error codes between versions would also indicate if one version was different than another.
+Although had the sums on the server side, I did not end up using them in my visualization because of time constraints.
+
+Given more time, I would also have tried to find the moving standard deviation of the error stream.
 The moving standard deviation would be helpful because it would give us a measure of how "stable" an error code is.
 For instance, if we found a low moving standard deviation for an error code in a player version, this would indicate the number of errors seen in a window period is pretty stable (ie aka the number of errors are not spiking/fluctuationg much)
 
 ### Visualization
 I was able to visualize the moving average for each error code in real time using the [smoothie charting library](https://github.com/joewalnes/smoothie)
 As new error codes are discovered in the error stream, they get added to the browswer window in real time.
-If I had more time, I would visualize the sum of the all the errors for each error code and spend more time on layout and styling....
+
+With more time, I would add the following improvements:
+- visualize cumulative sums of each error for each player version.
+- add more features in the UI visually "flag" the error codes in player versions that are significantly different. Right now, the web ui charts make it pretty obvious which error codes are different, but its not automatic. You could use threshold to acheive this. Specifically, you could have a the user enter a threshold value, and the threshold value would be used flag situaitons where the difference in the moving average is greater or equal to the threshold value that the user set.
+- improve the overall layout/styling/format of the UI....
 
 ## Technical Stack
 For this project, I used node js.
@@ -94,7 +102,8 @@ Additionally, node let me quickly stand up web server. The [socket.io](https://s
 If I had more time, I would do the following:
 
 -use parameters and/or configuration files for certain variables
--Allow the user to change the step/time interval of the moving average in the web ui/visualization
--Calculate the moving standard deviation
+-allow the user to change the step/time interval of the moving average in the web ui/visualization
+-add more to the server side to "flag" differences the moving averages between error code versions and send out email notifications.
+-calculate the moving standard deviation
 -write tests/unit tests
 -organize my code better and format/lint it (its pretty lumpy as of now)
