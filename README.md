@@ -4,8 +4,8 @@
 
 1. This repo assumes you have node and npm installed on your computer
 2. Clone the repo to your computer
-3. Open the command line and then run `npm install`
-4. Then run `npm run stream_errors`
+3. Open the command line and enter:  `npm install`
+4. Then in the cmd line do:  `npm run stream_errors`
 5. Wait a couple of seconds for the streams to get started
 4. Open your web browser and go to http://localhost:8080/
 
