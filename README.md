@@ -23,23 +23,23 @@ Caveats:
 
 ## App Design
 
-My overall approach was to process the error stream with minimal latency at all stages of the process, from point when data is aquired, to analytics and visualization and beyond.
+My overall approach was to process the error stream with minimal latency at all stages of the process, from the point when data is aquired, to analytics and visualization and beyond.
 
 There are three main componets to my application:
 
 1. Streaming Client app:
-  a. The client app reads the test dataset file creates a near real time stream of error data.
-  b. The client app connects to the server app and then streams the error data to the server via websockets
+  - The client app reads the test dataset file creates a near real time stream of error data.
+  - The client app connects to the server app and then streams the error data to the server via websockets
 
 2. The Server App
-  a. The server connects streaming client and listens for error code data
-  b. The server processes, accumulates and analayzes the error stream data continuously
-  c. The server simulatenously acts a web server, and allows other web browser clients to connect with it
-  d. When the server finished analyzing and processing for a given time-step, it emits the analysis to its web clients via web sockets
+  - The server connects streaming client and listens for error code data
+  - The server processes, accumulates and analayzes the error stream data continuously
+  - The server simulatenously acts a web server, and allows other web browser clients to connect with it
+  - When the server finished analyzing and processing for a given time-step, it emits the analysis to its web clients via web sockets
 
 3. Web Browser Client
-  a. Using websockets, the web browser client listens for the server app to emit error analysis data.
-  b. When new analysis arrives, the web browser client presents a dashboard with visualizations to convey some insight about the error stream
+  - Using websockets, the web browser client listens for the server app to emit error analysis data.
+  - When new analysis arrives, the web browser client presents a dashboard with visualizations to convey some insight about the error stream
 
 ## Processing the Error Processing and Stream Analysis
 
@@ -76,11 +76,11 @@ The moving standard deviation would be helpful because it would give us a measur
 For instance, if we found a low moving standard deviation for an error code in a player version, this would indicate the number of errors seen in a window period is pretty stable (ie aka the number of errors are not spiking/fluctuationg much)
 
 ### Visualization
-I was able to visualize the moving average for each error code in real time using the (Smoothie charting library)[https://github.com/joewalnes/smoothie]
+I was able to visualize the moving average for each error code in real time using the [Smoothie charting library](https://github.com/joewalnes/smoothie)
 As new error codes get discovered in the streams, they get added to the browswer window in real time.
 If I had more time, I would visualize the sum of the all the errors for each error code and spend more time on layout and styling....
 
 ### Technical Stack
 For this project, I used node js.
 Node is good choice for this project because it has some good libraries/features to deal with various streams.
-Additionally, node let me quickly stand up web server. The (socket.io)[https://socket.io/] library also made it straight forward/easy for the server to connect and manage to the client stream and web client over websockets.
+Additionally, node let me quickly stand up web server. The [socket.io](https://socket.io/) library also made it straight forward/easy for the server to connect and manage to the client stream and web client over websockets.
