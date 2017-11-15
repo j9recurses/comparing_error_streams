@@ -9,6 +9,7 @@
 5. Wait a couple of seconds for the streams to get started
 4. Open your web browser and go to http://localhost:8080/
 
+![](https://media.giphy.com/media/26Ffg2ct37a8F4SvS/source.mp4)
 
 ## The Task
 
@@ -47,7 +48,7 @@ The error stream is fairly noisey, for certain time periods, many error codes wi
 Our goal is to separate the signal from the noise and detect important patterns in the data.
 
 ### Using the Moving Average
-The moving average is a way to smooth the streaming data.
+The (moving average)[https://en.wikipedia.org/wiki/Moving_average] is a way to smooth the streaming data.
 It tells us if the number of errors for a given error code are going up or down over time.
 
 Once you have calcualted the moving average for each error type for a given player version, you can compare the moving averages at a given time step
