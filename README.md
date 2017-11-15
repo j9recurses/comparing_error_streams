@@ -88,22 +88,22 @@ I was able to visualize the moving average for each error code in real time usin
 As new error codes are discovered in the error stream, they get added to the browswer window in real time.
 
 With more time, I would add the following improvements:
-- visualize cumulative sums of each error for each player version.
-- add more features in the UI visually "flag" the error codes in player versions that are significantly different. Right now, the web ui charts make it pretty obvious which error codes are different, but its not automatic. You could use threshold to acheive this. Specifically, you could have a the user enter a threshold value, and the threshold value would be used flag situaitons where the difference in the moving average is greater or equal to the threshold value that the user set.
+- visualize cumulative sums of each error code for each player version.
+- add more features in the UI visually "flag" the error codes in player versions that are significantly different. Right now, the web ui charts make it pretty obvious which error codes are different, but its not automatic. You could use threshold to acheive this. Specifically, you could have the user enter a threshold value, and the threshold value would be used flag situaitons where the difference in the moving average is greater or equal to the threshold value that the user set.
 - improve the overall layout/styling/format of the UI....
 
 ## Technical Stack
 For this project, I used node js.
 Node is good choice for this project because it has some good libraries/features to deal with various streams.
-Additionally, node let me quickly stand up web server. The [socket.io](https://socket.io/) library also made it straight forward/easy for the server to connect and manage to the client stream and web client over websockets.
+Additionally, node let me quickly stand up a web server. The [socket.io](https://socket.io/) library also made it straight forward/easy for the server to connect and manage to the client stream and web client over websockets.
 
-###Other improvements
+### Other improvements
 
 If I had more time, I would do the following:
 
--use parameters and/or configuration files for certain variables
--allow the user to change the step/time interval of the moving average in the web ui/visualization
--add more to the server side to "flag" differences the moving averages between error code versions and send out email notifications.
--calculate the moving standard deviation
--write tests/unit tests
--organize my code better and format/lint it (its pretty lumpy as of now)
+- use parameters and/or configuration files for certain variables
+- allow the user to change the step/time interval of the moving average in the web ui/visualization
+- add more to the server side to "flag" differences the moving averages between error code versions and send out email notifications.
+- calculate the moving standard deviation
+- write tests/unit tests
+- organize my code a little better and format/lint it
