@@ -9,7 +9,7 @@
 5. Wait a couple of seconds for the streams to get started
 4. Open your web browser and go to http://localhost:8080/
 
-![](https://media.giphy.com/media/26Ffg2ct37a8F4SvS/source.mp4)
+![](https://github.com/j9recurses/comparing_error_streams/blob/master/error_stream_gif.gif)
 
 ## The Task
 
