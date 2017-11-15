@@ -7,7 +7,10 @@
 3. Open the command line and enter:  `npm install`
 4. Then in the cmd line do:  `npm run stream_errors`
 5. Wait a couple of seconds for the streams to get started
-4. Open your web browser and go to http://localhost:8080/
+6. Open your web browser and go to http://localhost:8080/
+
+Important to note: you can only have one instance of this project running on computer at a time because of ports/sockets...
+If you get errors make sure all instances of this project have stopped before restarting
 
 ![](https://github.com/j9recurses/comparing_error_streams/blob/master/error_stream_gif.gif)
 
