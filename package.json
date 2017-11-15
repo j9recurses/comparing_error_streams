@@ -1,0 +1,29 @@
+{
+  "name": "compare_error_streams",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "client_stream": "node client_stream_errors",
+    "server_stream": "node process_stream_server.js",
+    "stream_errors": "concurrently --kill-others \"npm run client_stream\" \"npm run server_stream\""
+  },
+  "author": "j9",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^2.6.0",
+    "async-parallel": "^1.2.3",
+    "express": "^4.16.2",
+    "line-by-line": "^0.1.5",
+    "lodash": "^4.17.4",
+    "moment": "^2.19.2",
+    "smoothie": "^1.33.0",
+    "socket.io": "^2.0.4",
+    "stats-lite": "^2.1.0",
+    "typescript": "^2.6.1"
+  },
+  "devDependencies": {
+    "concurrently": "^3.5.0"
+  }
+}

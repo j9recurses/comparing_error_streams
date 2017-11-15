@@ -1,0 +1,180 @@
+
+<html>
+
+<head>
+    <title>Compare Error Streams For Two Builds</title>
+
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/mustache.js/0.7.2/mustache.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.5.1/moment.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.2/d3.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.min.js"></script>
+    <script src="http://smoothiecharts.org/smoothie.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <style>
+
+    .chart .frame {
+        stroke:#ffffff;
+        stroke-width:10;
+        fill-opacity:0;
+    }
+    .chart .update, .chart .enter {
+        fill-opacity:1;
+        fill:#ffffff;
+        stroke:#ffffff;
+        stroke-width:1;
+    }
+    .ecwrapper{
+        margin-bottom:3%;
+    }
+
+    .td {
+        padding:5%;
+    }
+
+    .stats-tbl{
+        margin-left:8%;
+    }
+    .chart-stream{
+        margin-left:-2%;
+    }
+
+
+
+    html,body { height:100%;width:auto;}
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <h1 > Error Stream Comparison </h1>
+            <h2 id="pageId"></h2>
+        <div id="main-charts">
+
+        </div>
+
+    </div>
+
+
+   <!-- Initialize socket communication with server -->
+    <script src="http://localhost:8080/socket.io/socket.io.js" type="text/javascript"></script>
+
+    <!-- Handle socket communication -->
+    <script type="text/javascript">
+    //
+    // This script block handles all the Socket-IO communication
+    var handleServerRequest = function(data) {
+        console.log({
+            source: 'server',
+            action: 'request',
+            data: data
+        });
+
+        data.date = new Date(data.date);
+        update(data)
+    };
+
+    let socket = io.connect('http://localhost:8080');
+    socket.on('server request', handleServerRequest);
+    </script>
+    <script type="text/javascript">
+
+     let data = []
+     let errorCodes = []
+     let update = function(newData) {
+
+     function setTs(ts1, ts2, data1, data2) {
+        ts1.append(new Date().getTime(), data1)
+        ts2.append(new Date().getTime(), data2)
+     }
+     function StartInterval(frequency,ts1,ts2, data1, data2) {
+        setInterval(function(){
+            setTs(ts1, ts2, data1, data2)
+        },frequency)
+      }
+
+        // Update dataset
+        // Append new data
+        data = data.concat(newData)
+        console.log("*** moving")
+
+        let pgHead = document.getElementById("pageId")
+        pgHead.innerHTML = 'Versions <span style="color:#FF00FF">' + newData['movingAvgs'][0]['currV']+  '</span> And <span style="color:rgb(0, 255, 0)"> ' +newData['movingAvgs'][0]['newV'] + "</span>"
+
+
+        if ('movingAvgs' in newData){
+            errorCodeKeys = Object.keys(errorCodes)
+            newErrorCodes = newData['movingAvgs']
+            for(i =0; i < newErrorCodes.length; i++){
+              console.log(newErrorCodes[i])
+             if(newErrorCodes[i] != null){
+              newEc = newErrorCodes[i]['error_code']
+              if(errorCodeKeys.includes(newEc)){
+                console.log("seen")
+                let ecname = errorCodes[newEc]['error_code']
+                errorCodes[newEc].data = newErrorCodes[i]
+                 //   errorCodes[newEc]['windowStatsNew']['vals']
+
+
+
+                 errorCodes[newEc].tsN.append(new Date().getTime(), errorCodes[newEc]['windowStatsNew']['vals'][errorCodes[newEc]['windowStatsNew']['vals'].length-1])
+                 errorCodes[newEc].tsC.append(new Date().getTime(), errorCodes[newEc]['windowStatsCurr']['vals'][errorCodes[newEc]['windowStatsCurr']['vals'].length-1])
+              }else{
+                errorCodes[newEc] = {}
+                console.log("*new**")
+                errorCodes[newEc].data = newErrorCodes[i]
+                console.log(errorCodes[newEc].data)
+                errorCodes[newEc] = newErrorCodes[i]
+                let newDiv = document.createElement('div')
+                newDiv.className = "col-xs-4 ecwrapper"
+                //newDiv.innerHTML = '<div class"error-code-h"> Error Code ' + errorCodes[newEc]['error_code'] + '</div>'
+                let canvas1 = document.createElement('canvas')
+                canvas1.width = 250;
+                canvas1.height = 150;
+                canvas1.style.margin = "20px"
+                canvas1.id = "chartErrCode"+ newEc
+                canvas1.className = "chart-stream"
+
+                let ecname = errorCodes[newEc]['error_code']
+                let statsdiv = document.createElement('div')
+                statsdiv.innerHTML = '<div class="stats-tbl"><table><th>Moving Average of Error Code ' + ecname  + '</th></tabl></div>'
+                let mainDiv = document.getElementById("main-charts")
+                newDiv.appendChild(canvas1)
+                newDiv.appendChild(statsdiv)
+                mainDiv.appendChild(newDiv);
+
+
+                let sChart = new SmoothieChart({maxValueScale:1.10,minValueScale:1.10,interpolation:'linear', grid:{fillStyle:'#ffffff',strokeStyle:'#c1c1c1', borderVisible:true}, labels:{fillStyle:'#666666'}, tooltip:true});
+                errorCodes[newEc].tsN = new TimeSeries()
+                errorCodes[newEc].tsC = new TimeSeries()
+                sChart.streamTo(document.getElementById("chartErrCode"+ newEc), 100)
+                sChart.addTimeSeries(errorCodes[newEc].tsN, { strokeStyle:'rgb(0, 255, 0)', fillStyle:'rgba(0, 255, 0, 0.4)', lineWidth:3 })
+                sChart.addTimeSeries(errorCodes[newEc].tsC, {  strokeStyle:'rgb(255, 0, 255)', fillStyle:'rgba(255, 0, 255, 0.3)', lineWidth:3 })
+                errorCodes[newEc].tsC.append(new Date().getTime(), errorCodes[newEc]['windowStatsCurr']['vals']);
+                errorCodes[newEc].tsN.append(new Date().getTime(), errorCodes[newEc]['windowStatsNew']['vals']);
+              }
+
+             }
+            }
+        }
+
+        // Remove old data (i.e., avoid overflows)
+        var maxNumberOfRecords = 51;
+        while (data.length > maxNumberOfRecords) {
+            delete data.shift();
+        }
+
+    }
+
+
+    </script>
+
+
+</body>
+
+
+
+</html>

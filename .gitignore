@@ -1,0 +1,4 @@
+node_modules/*
+package-lock.json
+moving_avg_log.txt
+weird.html
