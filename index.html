@@ -13,7 +13,9 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.min.js"></script>
     <script src="http://smoothiecharts.org/smoothie.js"></script>
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
-    <style>
+
+
+     <style>
 
     .chart .frame {
         stroke:#ffffff;
@@ -45,6 +47,7 @@
 
     html,body { height:100%;width:auto;}
     </style>
+    <link rel="stylesheet" type="text/css" href="css/epoch.min.css">
 </head>
 
 <body>
@@ -52,6 +55,7 @@
         <div class="row">
             <h1 > Error Stream Comparison </h1>
             <h2 id="pageId"></h2>
+            <h3 id="gettingInfo"></h3>
         <div id="main-charts">
 
         </div>
@@ -67,67 +71,87 @@
     //
     // This script block handles all the Socket-IO communication
     var handleServerRequest = function(data) {
-        console.log({
+        /*console.log({
             source: 'server',
             action: 'request',
             data: data
         });
-
-        data.date = new Date(data.date);
+        */
+        //data.date = new Date(data.date);
         update(data)
     };
 
     let socket = io.connect('http://localhost:8080');
     socket.on('server request', handleServerRequest);
     </script>
+
+
     <script type="text/javascript">
 
+
      let data = []
-     let errorCodes = []
+     let errorCodes = {}
+
      let update = function(newData) {
 
-     function setTs(ts1, ts2, data1, data2) {
-        ts1.append(new Date().getTime(), data1)
-        ts2.append(new Date().getTime(), data2)
-     }
-     function StartInterval(frequency,ts1,ts2, data1, data2) {
-        setInterval(function(){
-            setTs(ts1, ts2, data1, data2)
-        },frequency)
+      let public_key = 'dZ4EVmE8yGCRGx5XRX1W';
+
+      function timestampToMS (ts){
+        tsL =  ts.split(":")
+        return (+ts[0] * (60000 * 60)) + (+ts[1] * 60000) + (+ts[0]*1000)
       }
 
-        // Update dataset
-        // Append new data
+      ///last method for getting the last element in an array
+      if (!Array.prototype.last){
+        Array.prototype.last = function(){
+            return this[this.length - 1];
+        };
+      };
+
         data = data.concat(newData)
-        console.log("*** moving")
-
-        let pgHead = document.getElementById("pageId")
-        pgHead.innerHTML = 'Versions <span style="color:#FF00FF">' + newData['movingAvgs'][0]['currV']+  '</span> And <span style="color:rgb(0, 255, 0)"> ' +newData['movingAvgs'][0]['newV'] + "</span>"
-
+        let isEmptyPgHead = document.getElementById('pageId').innerHTML === "";
+        if(isEmptyPgHead && newData.hasOwnProperty('versions') ){
+             let pgHead = document.getElementById("pageId")
+             pgHead.innerHTML = 'Versions <span style="color:#FF00FF">' + newData['versions']['currV']+  '</span> And <span style="color:rgb(0, 255, 0)"> ' +newData['versions']['newV'] + "</span>"
+        }else if(isEmptyPgHead && !newData.hasOwnProperty('versions')){
+            let pgHead = document.getElementById("pageId")
+            pgHead.innerHTML =  "Gathering Data..."
+        }
 
         if ('movingAvgs' in newData){
-            errorCodeKeys = Object.keys(errorCodes)
-            newErrorCodes = newData['movingAvgs']
-            for(i =0; i < newErrorCodes.length; i++){
-              console.log(newErrorCodes[i])
-             if(newErrorCodes[i] != null){
-              newEc = newErrorCodes[i]['error_code']
-              if(errorCodeKeys.includes(newEc)){
-                console.log("seen")
-                let ecname = errorCodes[newEc]['error_code']
-                errorCodes[newEc].data = newErrorCodes[i]
-                 //   errorCodes[newEc]['windowStatsNew']['vals']
+         let curr  = {}
+         let newe = {}
+         let neweE = []
+         let currE = []
+         if(newData['movingAvgs'].hasOwnProperty("currWindowStats")){
+            curr = newData['movingAvgs']['currWindowStats']
+         }
+         if(newData['movingAvgs'].hasOwnProperty("newWindowStats")){
+           newe = newData['movingAvgs']['newWindowStats']
+         }
+         let neweKeys = Object.keys(newe)
+         let currKeys = Object.keys(curr)
+         let ecname = ''
+         let erroCodesKeys = Object.keys(errorCodes)
+          let allEKeys = [...new Set(neweKeys.concat(currKeys))]
+          for(let k = 0; k < allEKeys.length; k++){
+            if(erroCodesKeys.indexOf(allEKeys[k]) === -1)
+            {
 
+                ecname = allEKeys[k]
+                let neweE = []
+                let currE = []
+                if( curr.hasOwnProperty(currKeys[k]) ){
+                    currE = curr[currKeys[k]]
+                }
+                if(newe.hasOwnProperty(neweKeys[k])){
+                    neweE = newe[neweKeys[k]]
+                }
 
+                errorCodes[ecname] = {}
+                errorCodes[ecname].newdata = newe[neweKeys[k]]
+                errorCodes[ecname].currdata = curr[currKeys[k]]
 
-                 errorCodes[newEc].tsN.append(new Date().getTime(), errorCodes[newEc]['windowStatsNew']['vals'][errorCodes[newEc]['windowStatsNew']['vals'].length-1])
-                 errorCodes[newEc].tsC.append(new Date().getTime(), errorCodes[newEc]['windowStatsCurr']['vals'][errorCodes[newEc]['windowStatsCurr']['vals'].length-1])
-              }else{
-                errorCodes[newEc] = {}
-                console.log("*new**")
-                errorCodes[newEc].data = newErrorCodes[i]
-                console.log(errorCodes[newEc].data)
-                errorCodes[newEc] = newErrorCodes[i]
                 let newDiv = document.createElement('div')
                 newDiv.className = "col-xs-4 ecwrapper"
                 //newDiv.innerHTML = '<div class"error-code-h"> Error Code ' + errorCodes[newEc]['error_code'] + '</div>'
@@ -135,30 +159,65 @@
                 canvas1.width = 250;
                 canvas1.height = 150;
                 canvas1.style.margin = "20px"
-                canvas1.id = "chartErrCode"+ newEc
+                canvas1.id = "chartErrCode"+ ecname
                 canvas1.className = "chart-stream"
-
-                let ecname = errorCodes[newEc]['error_code']
                 let statsdiv = document.createElement('div')
                 statsdiv.innerHTML = '<div class="stats-tbl"><table><th>Moving Average of Error Code ' + ecname  + '</th></tabl></div>'
+
                 let mainDiv = document.getElementById("main-charts")
                 newDiv.appendChild(canvas1)
                 newDiv.appendChild(statsdiv)
-                mainDiv.appendChild(newDiv);
+                mainDiv.appendChild(newDiv)
+                let sChart = new SmoothieChart({millisPerPixel:100, verticalSections:0, maxValueScale:1.10,minValueScale:1.10,interpolation:'linear', grid:{fillStyle:'#ffffff',strokeStyle:'#c1c1c1', borderVisible:true}, labels:{fillStyle:'#666666'}, tooltip:true})
+                errorCodes[ecname].tsN = new TimeSeries()
+                errorCodes[ecname].tsC = new TimeSeries()
+                sChart.streamTo(document.getElementById("chartErrCode"+ ecname), 100)
+                sChart.addTimeSeries(errorCodes[ecname].tsN, { strokeStyle:'rgb(0, 255, 0)', fillStyle:'rgba(0, 255, 0, 0.4)', lineWidth:3 })
+                sChart.addTimeSeries(errorCodes[ecname].tsC, {  strokeStyle:'rgb(255, 0, 255)', fillStyle:'rgba(255, 0, 255, 0.3)', lineWidth:3 })
+                errorCodes[ecname].tsC.append(new Date().getTime(), currE);
+                errorCodes[ecname].tsN.append(new Date().getTime(), neweE);
 
 
-                let sChart = new SmoothieChart({maxValueScale:1.10,minValueScale:1.10,interpolation:'linear', grid:{fillStyle:'#ffffff',strokeStyle:'#c1c1c1', borderVisible:true}, labels:{fillStyle:'#666666'}, tooltip:true});
-                errorCodes[newEc].tsN = new TimeSeries()
-                errorCodes[newEc].tsC = new TimeSeries()
-                sChart.streamTo(document.getElementById("chartErrCode"+ newEc), 100)
-                sChart.addTimeSeries(errorCodes[newEc].tsN, { strokeStyle:'rgb(0, 255, 0)', fillStyle:'rgba(0, 255, 0, 0.4)', lineWidth:3 })
-                sChart.addTimeSeries(errorCodes[newEc].tsC, {  strokeStyle:'rgb(255, 0, 255)', fillStyle:'rgba(255, 0, 255, 0.3)', lineWidth:3 })
-                errorCodes[newEc].tsC.append(new Date().getTime(), errorCodes[newEc]['windowStatsCurr']['vals']);
-                errorCodes[newEc].tsN.append(new Date().getTime(), errorCodes[newEc]['windowStatsNew']['vals']);
-              }
+            }else{
+                //console.log("seen")
+                let ecname = allEKeys[k]
+                //console.log(allEKeys[k])
 
-             }
+                ecname = allEKeys[k]
+                neweE = []
+                currE = []
+                if( curr.hasOwnProperty(currKeys[k]) ){
+                    console.log("********MOVING AVERAGES FOR CURRENT VERSION: *****")
+                    currE = curr[currKeys[k]]
+                    console.log(currE)
+                    console.log()
+                }
+                if(newe.hasOwnProperty(neweKeys[k])){
+                    console.log("********MOVING AVERAGES FOR NEW VERSION: *****")
+                    neweE = newe[neweKeys[k]]
+                    console.log(neweE)
+                    console.log()
+                }
+
+                //I need to compare the last like this before appending..
+                if(typeof curr[currKeys[k]] !== "undefined"){
+                    //if( curr[currKeys[k]].last() !==  errorCodes[ecname].currdata.last()) {
+                    errorCodes[ecname].tsC.append(new Date().getTime(), curr[currKeys[k]].last() )
+                }
+                 if(typeof newe[neweKeys[k]] !== "undefined"){
+                    errorCodes[ecname].tsN.append(new Date().getTime(), newe[neweKeys[k]].last() )
+                }
+
+
+               //if ((typeof curr[currKeys[k]] != 'undefined') && (typeof errorCodes[ecname].currdata  != 'undefined')){
+               // if( curr[currKeys[k]].last() !==  errorCodes[ecname].currdata.last()) {
+                    //errorCodes[ecname].tsC.append(new Date().getTime(), parseInt(curr[currKeys[k]].last()) )
+                   // errorCodes[ecname].currdata.push(curr[currKeys[k]].last())
+               // }
+               //}
             }
+
+          }
         }
 
         // Remove old data (i.e., avoid overflows)

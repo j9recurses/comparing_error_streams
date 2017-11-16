@@ -46,18 +46,30 @@ function MovingAverageWindow(windowSteps){
     this.movingAvgTimeStamps.push(timestamp)
     //get rid of the oldest measurement in the window to make room for a new on
     if(this.movingAvgData.length > this.windowSteps){
-      this.movingAvgData.pop(0)
-      this.movingAvgTimeStamps.pop(0)
+      let popped = this.movingAvgData.shift();
+      this.movingAvgTimeStamps.shift();
     }
   }
   this.getCurrentState = function(){
+    //console.log(this.movingAvgData)
+    if (this.movingAvgData.length !== windowSteps){
+      console.log("not enough time has ellapsed")
+      return {
+        'start': 'na',
+        'end': 'na',
+        'windowAvg': 'na'
+      }
+    }
     sumOfWindowPerod = this.movingAvgData.reduce((a, b) => a + b, 0)
-    let windowAvg =  sumOfWindowPerod / this.movingAvgData.length
+
+    //console.log(this.movingAvgData)
+    let windowAvg =  sumOfWindowPerod / this.windowSteps
     return {
       'start':this.movingAvgTimeStamps[0],
       'end': this.movingAvgTimeStamps[this.movingAvgTimeStamps.length-1],
       'windowAvg': windowAvg
     }
+    //return [this.movingAvgTimeStamps[this.movingAvgTimeStamps.length-1], windowAvg]
   }
 }
 
@@ -68,7 +80,7 @@ function ErrorCode(errorCode){
   this.firstSeen = errorCode['ts']
   this.totalTimesSeen = 1
   this.movingAvgEstimate = []
-  this.lastAvgMovingEstimate
+  ///this.lastAvgMovingEstimate
 }
 
 //build up the Obj by the version number
@@ -93,6 +105,7 @@ function VersionErrors(version, windowSteps){
   }
   //sum the bin for a specific moment in time
   this.sumBinsAndAddStep = function(tsEllapsed){
+
     isEmpty = Object.keys(this.errorCodes).length === 0 && this.errorCodes.constructor === Object
     if(!isEmpty){
       let keys = Object.keys(this.errorCodes)
@@ -106,11 +119,22 @@ function VersionErrors(version, windowSteps){
   //get the final moving average val for a given period
   this.getCurrentMovingAvgEstimates = function(){
     let keys = Object.keys(this.errorCodes)
+    if (keys.length === 0){
+      console.log("*****NO DATA IS STREAMING*********")
+      console.log("***CHECK THE ERROR STREAM***")
+    }
     for(let i = 0; i < keys.length; i++){
       let ec = this.errorCodes[keys[i]]
+
       let currState = ec['movingAvgWindow'].getCurrentState()
-      ec.movingAvgEstimate.push(currState)
+
+      if(currState.windowAvg !== 'na'){
+        let mva =  {"time": currState.end, "mav": currState.windowAvg}
+        ec.movingAvgEstimate.push(mva)
+      }
+
       currState['err_code'] = keys[i]
+
       currState['version'] = this.version
       //write the stream somewhere else
       writeStream.write(JSON.stringify(currState)+'\r\n');
@@ -121,15 +145,13 @@ function VersionErrors(version, windowSteps){
     let estimates = {}
     let keys = Object.keys(this.errorCodes)
     for(let i = 0; i < keys.length; i++){
-      let mv = this.errorCodes[keys[i]]['movingAvgEstimate']
-      let windows = _.map( mv , function( o ) {
-        return o.windowAvg;
-      })
-      let windowStats = {}
-      //
-      //windowStats['std_dev'] = stats.stdev(windows)
-      windowStats['vals'] = windows
-      estimates[keys[i]] = windowStats
+      let mvE = this.errorCodes[keys[i]]['movingAvgEstimate']
+      if(mvE.length > 0){
+        estimates[keys[i]] = mvE
+      }
+    }
+    if(estimates.length > 0){
+      estimates  =  estimates.sort( function ( a, b ) { return parseInt(b.key) - parseInt(a.key) } )
     }
     return {
      'version': this.version,
@@ -154,57 +176,38 @@ function VersionErrors(version, windowSteps){
 function CompareVersionErrors() {
   this.sums = {'currV': 0, 'newV':0}
   this.signifcantIncreases = {}
+  this.currV = ""
+  this.newV = ""
+  this.newWindowStats = []
+  this.currWindowStats = []
+  this.getVersions = function(){
+    return {
+      'newV': this.newV,
+      'currV': this.currV
+    }
+  }
+  this.getAllErrorCodes = function(){
+    return this.allErrorCodes
+  }
   this.compareTwoVersions =  function(currentV, newV, threshold, ts){
     let signifcantIncreases = []
     let curVEst = currentV.getMovingAvgEstimate()
-    let newVEst = newV.getMovingAvgEstimate()
-    let keyNew =  Object.keys(newVEst['estimates'])
-    let keyCurr = Object.keys(curVEst['estimates'])
-    let allKeys = [...new Set(keyCurr.concat(keyNew))]
-    allKeys.forEach(function(key){
-      if( keyCurr.includes(key) && keyNew.includes(key) ){
-        let newWindowStats =  newVEst['estimates'][key]
-        let currWindowStats = curVEst['estimates'][key]
-        let item = {
-            'error_code': key,
-            'windowStatsNew': newWindowStats,
-            'windowStatsCurr':currWindowStats,
-            'currV': curVEst['version'],
-            'newV':newVEst['version']
-        }
-        signifcantIncreases[key] = item
-      //Need to come back-  not having both error codes makes visualization harder
-      } /*else if ( keyCurr.includes(key) && (!keyNew.includes(key)) ){
-        let currWindowStats = curVEst['estimates'][key]
-        let item = {
-            'error_code': key,
-            'windowStatsCurr':currWindowStats,
-            'currV': curVEst['version'],
+    let newVEst= newV.getMovingAvgEstimate()
 
-        }
-        signifcantIncreases[key] = item
-      }
-
-       else if ( (!keyCurr.includes(key)) && keyNew.includes(key) ){
-        let newWindowStats = newVEst['estimates'][key]
-        let item = {
-            'error_code': key,
-            'windowStatsNew':newWindowStats,
-            'newV':newVEst['version']
-        }
-        signifcantIncreases[key] = item
-      }*/
-    })
-    if(signifcantIncreases.length > 0){
-           signifcantIncreases  =  signifcantIncreases.sort( function ( a, b ) { return b.key - a.key } );
+    if(this.currV === ""){
+       this.currV = curVEst['version']
     }
-    this.signifcantIncreases = signifcantIncreases
-    //console.log(this.signifcantIncreases )
+    if(this.newV === ""){
+      this.newV = newVEst['version']
+    }
+    this.newWindowStats = newVEst['estimates']
+    this.currWindowStats =  curVEst['estimates']
   }
   this.getSignifcantIncreases = function(){
-    //console.log("calling significant increases")
-    //console.log(this.signifcantIncreases)
-    return this.signifcantIncreases
+    return {
+      'newWindowStats': this.newWindowStats,
+      'currWindowStats': this.currWindowStats
+    }
   }
   this.setTotalErrors = function(currentV, newV){
     let newVSum = newV.getSumErrors()
@@ -255,8 +258,8 @@ async function getAvgMovingWindowForErrors (currentVersionErrors,newVersionError
 
 let binRunner = 3600*24
 let streamStart = new Date()
-let movingAvgWindowTime = 15
-let binWindow = 5
+let movingAvgWindowTime = 10
+let binWindow = 2
 let threshold = 30
 let windowSteps = movingAvgWindowTime / binWindow
 let currentVersion = '5.0007.510.011'
@@ -284,7 +287,6 @@ io1.on('connection', function(socket1) {
       }
   })
 })
-
 
 
 let streamer1 = streamFxns.runIterval(function(){
@@ -327,8 +329,8 @@ function handler(req, res) {
 // Manage connections
 io2.sockets.on('connection', function(socket) {
     console.log('handle connection');
-
-    var periodInMilliseconds = 3000;
+    //this controls how often the server will send data to the web client
+    var periodInMilliseconds = 5000;
     var timeoutId = -1;
 
     /**
@@ -336,7 +338,6 @@ io2.sockets.on('connection', function(socket) {
      */
     var handleDisconnect = function() {
         console.log('handle disconnect');
-
         clearTimeout(timeoutId);
     };
 
@@ -346,8 +347,13 @@ io2.sockets.on('connection', function(socket) {
     var generateServerRequest = function() {
         //console.log('generate server request');
         //console.log("socket is emitting")
+        //console.log("*socket is emitting***")
+
         socket.emit('server request', {
-            date: new Date(),
+            movingAvgWindowTime: movingAvgWindowTime,
+            binWindow: binWindow,
+            versions: compareVersionErrors.getVersions(),
+            allErroCodes: compareVersionErrors.getAllErrorCodes(),
             //totalErrors: compareVersionErrors.getTotalErrors(),
             movingAvgs: compareVersionErrors.getSignifcantIncreases()
         });

@@ -21,7 +21,7 @@
     "smoothie": "^1.33.0",
     "socket.io": "^2.0.4",
     "stats-lite": "^2.1.0",
-    "typescript": "^2.6.1"
+    "typescript": "^2.6.1",
   },
   "devDependencies": {
     "concurrently": "^3.5.0"

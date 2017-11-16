@@ -41,6 +41,8 @@ secondsToHMSStamp: function(seconds) {
     return hDisplay + mDisplay + sDisplay
 },
 
+
+
 getTsNow: function(){
     d = new Date();
     ts = d.toTimeString().split(' ')[0]
