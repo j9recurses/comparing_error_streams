@@ -258,8 +258,8 @@ async function getAvgMovingWindowForErrors (currentVersionErrors,newVersionError
 
 let binRunner = 3600*24
 let streamStart = new Date()
-let movingAvgWindowTime = 10
-let binWindow = 2
+let movingAvgWindowTime = 20
+let binWindow = 4
 let threshold = 30
 let windowSteps = movingAvgWindowTime / binWindow
 let currentVersion = '5.0007.510.011'
