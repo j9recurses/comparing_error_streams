@@ -73,8 +73,6 @@ The moving average is "moving" because it is continously recomputed itself as ne
 The moving average progresses by dropping the earliest value in a period and adding the latest value.
 The process of dropping older values ensures that the data that your processing never gets too unwieldy.
 
-By comparing the moving average between two error code streams, we can find if the new build errors are significantly different from the last build.
-
 ### Additional Stream Analysis
 Beyond the moving average, I also stored the sum of all each type of error. Looking at the cumulative sums of the error codes between versions would also indicate if one version was different than another.
 Although had the sums on the server side, I did not end up using them in my visualization because of time constraints.
